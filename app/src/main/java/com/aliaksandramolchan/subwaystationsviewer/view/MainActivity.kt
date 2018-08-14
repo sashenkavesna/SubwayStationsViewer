@@ -8,7 +8,6 @@ import com.aliaksandramolchan.subwaystationsviewer.R
 
 class MainActivity : AppCompatActivity(), StationsFragment.OnNetworkChangedListener {
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -20,6 +19,7 @@ class MainActivity : AppCompatActivity(), StationsFragment.OnNetworkChangedListe
         }
 
     }
+
     override fun checkNetwork(): Boolean {
         val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val info = cm.getActiveNetworkInfo()
