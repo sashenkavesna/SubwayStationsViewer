@@ -1,6 +1,6 @@
 package com.aliaksandramolchan.subwaystationsviewer.network
 
-import com.aliaksandramolchan.subwaystationsviewer.BASE_URL
+import com.aliaksandramolchan.subwaystationsviewer.utils.BASE_URL
 import com.aliaksandramolchan.subwaystationsviewer.model.Station
 import io.reactivex.Observable
 import retrofit2.Retrofit

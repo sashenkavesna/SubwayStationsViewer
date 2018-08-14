@@ -1,4 +1,4 @@
-package com.aliaksandramolchan.subwaystationsviewer
+package com.aliaksandramolchan.subwaystationsviewer.utils
 
 
 const val BASE_URL: String = "https://my-json-server.typicode.com"

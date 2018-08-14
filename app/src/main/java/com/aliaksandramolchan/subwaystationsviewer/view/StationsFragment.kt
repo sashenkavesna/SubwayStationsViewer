@@ -13,7 +13,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.Toast
-import com.aliaksandramolchan.subwaystationsviewer.LOCATION_PERMISSION_REQUEST_CODE
+import com.aliaksandramolchan.subwaystationsviewer.utils.LOCATION_PERMISSION_REQUEST_CODE
 import com.aliaksandramolchan.subwaystationsviewer.R
 import com.aliaksandramolchan.subwaystationsviewer.utils.LocationService
 import com.aliaksandramolchan.subwaystationsviewer.viewmodel.StationsViewModel
