@@ -17,6 +17,7 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null
                         "${BaseColumns._ID} INTEGER PRIMARY KEY," +
                         "${DBContract.StationEntry.COLUMN_NAME} TEXT," +
                         "${DBContract.StationEntry.COLUMN_LONGITUDE} REAL," +
+                        "${DBContract.StationEntry.COLUMN_DISTANCE} REAL," +
                         "${DBContract.StationEntry.COLUMN_LATITUDE} REAL)"
 
         private val SQL_DELETE_ENTRIES = "DROP TABLE IF EXISTS " +

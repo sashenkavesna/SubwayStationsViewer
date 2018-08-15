@@ -3,7 +3,6 @@ package com.aliaksandramolchan.subwaystationsviewer.view
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.location.LocationManager
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
@@ -13,29 +12,28 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.Toast
-import com.aliaksandramolchan.subwaystationsviewer.utils.LOCATION_PERMISSION_REQUEST_CODE
 import com.aliaksandramolchan.subwaystationsviewer.R
-import com.aliaksandramolchan.subwaystationsviewer.utils.LocationService
+import com.aliaksandramolchan.subwaystationsviewer.utils.LOCATION_PERMISSION_REQUEST_CODE
 import com.aliaksandramolchan.subwaystationsviewer.viewmodel.StationsViewModel
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import java.io.IOException
 
 
 class StationsFragment : Fragment() {
 
-    private lateinit var viewModel: StationsViewModel
+    lateinit var viewModel: StationsViewModel
 
     private lateinit var progressBar: ProgressBar
     private lateinit var recyclerView: RecyclerView
     private lateinit var onNetworkChangedListener: OnNetworkChangedListener
 
-    private lateinit var locationManager: LocationManager
-    private lateinit var locationService: LocationService
+    val stationsAdapter: StationsAdapter = StationsAdapter()
 
-    private val stationsAdapter: StationsAdapter = StationsAdapter()
-    private val compositeDisposable = CompositeDisposable()
+    private val compositeDisposable: CompositeDisposable = CompositeDisposable()
+    private var disposable: Disposable? = null
 
     interface OnNetworkChangedListener {
         fun checkNetwork(): Boolean
@@ -53,14 +51,6 @@ class StationsFragment : Fragment() {
 
     }
 
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        locationManager = this.context!!.getSystemService(Context.LOCATION_SERVICE)
-                as LocationManager
-        locationService = LocationService()
-    }
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.fragment_stations, container, false)
 
@@ -75,8 +65,42 @@ class StationsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+
         subscribeToProgressBar()
         subscribeToAdapterData()
+
+        if (isLocationPermissionGranted()) {
+            requestPermissions(arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION),
+                    LOCATION_PERMISSION_REQUEST_CODE)
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (permissions.size > 0) {
+                if (permissions[0] == Manifest.permission.ACCESS_FINE_LOCATION &&
+                        grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    subscribeToLocation()
+                }
+            }
+        }
+    }
+
+
+    private fun subscribeToLocation() {
+        disposable = viewModel.observeCurrentLocation()
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({
+                    stationsAdapter.updateStations(it)
+                }, {
+                    if (it is SecurityException) {
+                        Toast.makeText(this.context, R.string.permission_error, Toast.LENGTH_SHORT).show()
+                    } else if (it is IOException) {
+                        Toast.makeText(this.context, R.string.provider_error, Toast.LENGTH_SHORT).show()
+                    }
+                })
     }
 
     private fun subscribeToProgressBar() {
@@ -85,81 +109,54 @@ class StationsFragment : Fragment() {
                 .subscribe {
                     progressBar.visibility = it
                 })
+
+
     }
+
 
     private fun subscribeToAdapterData() {
         compositeDisposable.add(viewModel.observeStations()
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
-                .retry()
-                .subscribe({ list ->
-                    if (list.isEmpty())
+                .subscribe({ stations ->
+
+                    if (stations.isEmpty())
                         throw IOException()
 
-                    for (station in list) {
-                        station.distance = locationService.getDistance(station)
-                    }
-
-                    stationsAdapter.updateStations(list.sortedBy { it.distance })
+                    stationsAdapter.updateStations(stations.sortedBy { it.distance })
 
                 }, {
-                    Toast.makeText(this.context, R.string.empty_db, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this.context, R.string.networ_error, Toast.LENGTH_SHORT).show()
                 }))
+
+
     }
 
     override fun onResume() {
         super.onResume()
-        checkLocationPermissions()
+
+        if (isLocationPermissionGranted()) {
+            Toast.makeText(this.context, R.string.permission_error, Toast.LENGTH_SHORT).show()
+        } else subscribeToLocation()
+
     }
+
+    private fun isLocationPermissionGranted(): Boolean {
+        return ContextCompat.checkSelfPermission(this.context!!, android.Manifest
+                .permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+    }
+
 
     override fun onPause() {
         super.onPause()
-        locationManager.removeUpdates(locationService)
+
+        disposable?.dispose()
+
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         compositeDisposable.clear()
-    }
-
-
-    private fun checkLocationPermissions() {
-        if (ContextCompat.checkSelfPermission(this.context!!, android.Manifest
-                        .permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION),
-                    LOCATION_PERMISSION_REQUEST_CODE)
-
-        } else loadlocation()
-    }
-
-
-    private fun loadlocation() {
-        try {
-            var provider: String
-
-            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
-                provider = LocationManager.GPS_PROVIDER
-            else if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
-                provider = LocationManager.NETWORK_PROVIDER
-            else throw IOException()
-
-            locationManager.requestLocationUpdates(provider, 0, 1.0f, locationService)
-
-            if (locationManager.getLastKnownLocation(provider) == null) {
-                provider = LocationManager.PASSIVE_PROVIDER
-                locationManager.requestLocationUpdates(provider, 0, 1.0f, locationService)
-            }
-
-            while (locationManager.getLastKnownLocation(provider) == null) {
-            }
-            locationService.currentLocation = locationManager.getLastKnownLocation(provider)
-
-        } catch (e: SecurityException) {
-
-        } catch (e: IOException) {
-            Toast.makeText(this.context, R.string.error, Toast.LENGTH_SHORT).show()
-        }
     }
 
 }

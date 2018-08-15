@@ -9,5 +9,6 @@ object DBContract {
         const val COLUMN_NAME = "name"
         const val COLUMN_LATITUDE = "latitude"
         const val COLUMN_LONGITUDE = "longitude"
+        const val COLUMN_DISTANCE = "distance"
     }
 }

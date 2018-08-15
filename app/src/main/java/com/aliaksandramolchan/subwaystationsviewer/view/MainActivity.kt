@@ -3,10 +3,12 @@ package com.aliaksandramolchan.subwaystationsviewer.view
 import android.content.Context
 import android.net.ConnectivityManager
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
 import com.aliaksandramolchan.subwaystationsviewer.R
+import dagger.android.support.DaggerAppCompatActivity
 
-class MainActivity : AppCompatActivity(), StationsFragment.OnNetworkChangedListener {
+
+class MainActivity : DaggerAppCompatActivity(), StationsFragment.OnNetworkChangedListener
+ {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,7 +22,7 @@ class MainActivity : AppCompatActivity(), StationsFragment.OnNetworkChangedListe
 
     }
 
-    override fun checkNetwork(): Boolean {
+   override fun checkNetwork(): Boolean {
         val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val info = cm.getActiveNetworkInfo()
         if (info != null && info.isConnected) {

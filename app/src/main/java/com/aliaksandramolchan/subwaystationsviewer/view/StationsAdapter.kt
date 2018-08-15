@@ -1,5 +1,6 @@
 package com.aliaksandramolchan.subwaystationsviewer.view
 
+import android.location.Location
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
@@ -8,7 +9,9 @@ import android.widget.TextView
 import android.widget.Toast
 import com.aliaksandramolchan.subwaystationsviewer.R
 import com.aliaksandramolchan.subwaystationsviewer.model.Station
+import com.aliaksandramolchan.subwaystationsviewer.utils.LocationService
 import com.aliaksandramolchan.subwaystationsviewer.viewmodel.StationItemViewModel
+
 
 class StationsAdapter() : RecyclerView.Adapter<StationsAdapter.ViewHolder>() {
     private var stations: List<Station> = ArrayList()
@@ -32,6 +35,23 @@ class StationsAdapter() : RecyclerView.Adapter<StationsAdapter.ViewHolder>() {
         notifyDataSetChanged()
     }
 
+    fun updateStations(location: Location) {
+        if (!stations.isEmpty()) {
+
+            val newList: MutableList<Station> = ArrayList()
+            newList.addAll(stations)
+
+            for (station in newList) {
+                station.distance = LocationService.getDistance(station, location)
+            }
+
+            newList.sortBy { it.distance }
+
+            stations = newList.toList()
+            notifyDataSetChanged()
+        }
+    }
+
     class ViewHolder(private val view: View) : RecyclerView.ViewHolder(view) {
         var viewModel: StationItemViewModel? = null
         val nameView = view.findViewById<TextView>(R.id.stationName)
@@ -41,8 +61,13 @@ class StationsAdapter() : RecyclerView.Adapter<StationsAdapter.ViewHolder>() {
                 viewModel = StationItemViewModel()
                 view.setOnClickListener {
                     viewModel!!.observeDistance().subscribe { d ->
-                        Toast.makeText(view.context, "Distance is " + d.toString() + " m",
-                                Toast.LENGTH_SHORT).show()
+                        if (d == 0.0f) {
+                            Toast.makeText(view.context,
+                                    R.string.permission_error, Toast.LENGTH_SHORT)
+                                    .show()
+                        } else Toast.makeText(view.context,
+                                "Distance is " + d.toString() + " m", Toast.LENGTH_SHORT)
+                                .show()
                     }
                 }
             }

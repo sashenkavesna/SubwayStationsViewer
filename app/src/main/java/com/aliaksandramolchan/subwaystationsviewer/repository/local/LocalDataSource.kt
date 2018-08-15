@@ -28,6 +28,7 @@ class LocalDataSource(private val dbHelper: DBHelper) : LocalDataRepository {
                 put(DBContract.StationEntry.COLUMN_NAME, station.name)
                 put(DBContract.StationEntry.COLUMN_LONGITUDE, station.longitude)
                 put(DBContract.StationEntry.COLUMN_LATITUDE, station.latitude)
+                put(DBContract.StationEntry.COLUMN_DISTANCE, station.distance)
             }
             db.insert(DBContract.StationEntry.TABLE_NAME, null, values)
 
@@ -44,6 +45,7 @@ class LocalDataSource(private val dbHelper: DBHelper) : LocalDataRepository {
                 put(DBContract.StationEntry.COLUMN_NAME, station.name)
                 put(DBContract.StationEntry.COLUMN_LONGITUDE, station.longitude)
                 put(DBContract.StationEntry.COLUMN_LATITUDE, station.latitude)
+                put(DBContract.StationEntry.COLUMN_DISTANCE, station.distance)
             }
 
             val selection = "${BaseColumns._ID} LIKE ?"
@@ -74,7 +76,12 @@ class LocalDataSource(private val dbHelper: DBHelper) : LocalDataRepository {
                 val name = getString(getColumnIndexOrThrow(DBContract.StationEntry.COLUMN_NAME))
                 val longitude = getDouble(getColumnIndexOrThrow(DBContract.StationEntry.COLUMN_LONGITUDE))
                 val latitude = getDouble(getColumnIndexOrThrow(DBContract.StationEntry.COLUMN_LATITUDE))
-                stations.add(Station(name, latitude, longitude))
+                val distance= getFloat(getColumnIndexOrThrow(DBContract.StationEntry.COLUMN_DISTANCE))
+
+                val station=Station(name, latitude, longitude)
+                station.distance=distance
+
+                stations.add(station)
             }
         }
         cursor.close()

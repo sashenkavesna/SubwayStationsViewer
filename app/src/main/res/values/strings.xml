@@ -1,5 +1,8 @@
 <resources>
     <string name="app_name">SubwayStationsViewer</string>
-    <string name="error">Check GPS or network provider</string>
-    <string name="empty_db">Check network connection</string>
+
+    <string name="provider_error">Check GPS or network provider</string>
+    <string name="networ_error">Check network connection</string>
+    <string name="permission_error">Please grant location permission</string>
+
 </resources>
